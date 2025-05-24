@@ -1,12 +1,14 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "The backend for the Slot-Booking Application",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "db:seed": "seed.js"
+    "start": "node server.js",
+    "lint": "prettier --write .",
+    "db:seed": "seed.js",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
