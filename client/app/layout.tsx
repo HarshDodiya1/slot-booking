@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Slot Booking App',
   description: 'Book your sports venue slots easily',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
