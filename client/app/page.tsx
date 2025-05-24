@@ -5,10 +5,10 @@ import { SlotViewer } from "@/components/slot-viewer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VenueSelector } from "@/components/venue-selector";
-import { getNext7Days, getSlots, getVenues } from "@/lib/api";
+import { getDates, getSlots, getVenues } from "@/lib/api";
 import { Day, Slot, Venue } from "@/types";
 import { CalendarDays } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 
 export default function Home() {
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -20,31 +20,48 @@ export default function Home() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  
+  // Use ref to track modal state for polling
+  const isBookingModalOpenRef = useRef(false);
 
-  // Load venues when the component mounts
+  // Update ref when modal state changes
   useEffect(() => {
-    const fetchVenues = async () => {
+    isBookingModalOpenRef.current = isBookingModalOpen;
+  }, [isBookingModalOpen]);
+
+  // Loading venues and dates when the component mounts
+  useEffect(() => {
+    const fetchInitialData = async () => {
       try {
-        const venuesData = await getVenues();
+        setIsLoadingVenues(true);
+        
+        const [venuesData, daysData] = await Promise.all([
+          getVenues(),
+          getDates()
+        ]);
+        
         setVenues(venuesData);
+        setDays(daysData);
+        
         if (venuesData.length > 0) {
           setSelectedVenue(venuesData[0].id);
         }
-
-        const daysData = getNext7Days();
-        setDays(daysData);
-        setSelectedDate(daysData[0].date);
+        
+        if (daysData.length > 0) {
+          setSelectedDate(daysData[0].date);
+        }
+        
       } catch (error) {
-        console.error("Failed to fetch venues:", error);
+        console.error("Failed to fetch initial data:", error);
       } finally {
         setIsLoadingVenues(false);
       }
     };
 
-    fetchVenues();
+    fetchInitialData();
   }, []);
 
-  // Load slots when the selected venue or date changes
+  // Loading slots when the selected venue or date changes
   const fetchSlots = useCallback(async () => {
     if (selectedVenue && selectedDate) {
       setIsLoadingSlots(true);
@@ -53,6 +70,7 @@ export default function Home() {
         setSlots(slotsData);
       } catch (error) {
         console.error("Failed to fetch slots:", error);
+        setSlots([]);
       } finally {
         setIsLoadingSlots(false);
       }
@@ -63,35 +81,39 @@ export default function Home() {
     fetchSlots();
   }, [fetchSlots]);
 
-  // Set up polling logic
+  // Setting up polling logic that runs every 10 seconds but respects modal state
   useEffect(() => {
-    if (!selectedVenue || !selectedDate || isBookingModalOpen) return;
+    if (!selectedVenue || !selectedDate) return;
 
     setIsPolling(true);
     const pollInterval = setInterval(() => {
-      fetchSlots();
-    }, 8000);
+      // Only poll if modal is not open
+      if (!isBookingModalOpenRef.current) {
+        fetchSlots();
+      }
+    }, 10000);
 
     return () => {
       clearInterval(pollInterval);
       setIsPolling(false);
     };
-  }, [selectedVenue, selectedDate, fetchSlots, isBookingModalOpen]);
+  }, [selectedVenue, selectedDate, fetchSlots]);
 
-  // Handle venue change
   const handleVenueChange = (venueId: string) => {
     setSelectedVenue(venueId);
   };
 
-  // Handle date change
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
   };
 
-  // Get venue name from ID
   const getVenueName = (venueId: string) => {
     const venue = venues.find((v) => v.id === venueId);
     return venue ? venue.name : "";
+  };
+
+  const handleModalStateChange = (isOpen: boolean) => {
+    setIsBookingModalOpen(isOpen);
   };
 
   return (
@@ -101,7 +123,7 @@ export default function Home() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="flex items-center">
               <CalendarDays className="h-6 w-6 mr-2 text-primary" />
-              <CardTitle>Slot Booking</CardTitle>
+              <CardTitle>Slot Booking System</CardTitle>
             </div>
             <ThemeToggle />
           </CardHeader>
@@ -131,6 +153,7 @@ export default function Home() {
             venueId={selectedVenue}
             onRefresh={fetchSlots}
             isPolling={isPolling}
+            onModalStateChange={handleModalStateChange}
           />
         )}
       </div>

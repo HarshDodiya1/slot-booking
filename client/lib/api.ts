@@ -1,107 +1,148 @@
-import { Slot, Venue, Sport } from "@/types";
+import { Venue, Slot, Sport, Day } from "@/types";
 
-// Simulated delay for API calls
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-// Mock venues data
-const venues: Venue[] = [
-  { id: "venue-1", name: "Venue A" },
-  { id: "venue-2", name: "Venue B" },
-];
+// Helper function for API calls
+const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  const defaultOptions: RequestInit = {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    ...options,
+  };
 
-// Mock sports data
-const sports: Sport[] = [
-  { id: "sport-1", name: "Tennis" },
-  { id: "sport-2", name: "Badminton" },
-  { id: "sport-3", name: "Basketball" },
-  { id: "sport-4", name: "Football" },
-];
-
-// Generate time slots from 8 AM to 8 PM
-const generateTimeSlots = (
-  venueId: string,
-  date: string,
-  isBooked = false
-): Slot[] => {
-  const slots: Slot[] = [];
-  const startHour = 8; // 8 AM
-  const endHour = 20; // 8 PM
-
-  for (let hour = startHour; hour < endHour; hour++) {
-    // Create two 30-minute slots per hour
-    for (let minutes = 0; minutes < 60; minutes += 30) {
-      const startTime = `${hour.toString().padStart(2, "0")}:${minutes
-        .toString()
-        .padStart(2, "0")}`;
-      const endMinutes = minutes + 30;
-      const endHourAdjusted = endMinutes === 60 ? hour + 1 : hour;
-      const endMinutesAdjusted = endMinutes === 60 ? 0 : endMinutes;
-      const endTime = `${endHourAdjusted
-        .toString()
-        .padStart(2, "0")}:${endMinutesAdjusted.toString().padStart(2, "0")}`;
-
-      // Randomly mark some slots as booked for demonstration
-      const randomBooked = Math.random() < 0.3;
-      const slotIsBooked = isBooked || randomBooked;
-
-      slots.push({
-        id: `${venueId}-${date}-${startTime}`,
-        venueId,
-        startTime,
-        endTime,
-        isBooked: slotIsBooked,
-        price: Math.floor(Math.random() * 20) + 30, // Random price between 30 and 50
-      });
+  try {
+    const response = await fetch(url, defaultOptions);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`API call failed for ${endpoint}:`, error);
+    throw error;
   }
-
-  return slots;
 };
 
-// Mock API functions
+// Get all venues from backend
 export const getVenues = async (): Promise<Venue[]> => {
-  await delay(800); // Simulate network delay
-  return venues;
+  try {
+    const response = await apiCall('/api/getVenues');
+    return response.data || [];
+  } catch (error) {
+    console.error('Failed to fetch venues:', error);
+    throw new Error('Failed to load venues. Please try again.');
+  }
 };
 
+// Get all sports from backend
 export const getSports = async (): Promise<Sport[]> => {
-  await delay(600);
-  return sports;
+  try {
+    const response = await apiCall('/api/sports');
+    return response.data || [];
+  } catch (error) {
+    console.error('Failed to fetch sports:', error);
+    return [
+      { id: "sport-1", name: "Tennis" },
+      { id: "sport-2", name: "Badminton" },
+      { id: "sport-3", name: "Basketball" },
+      { id: "sport-4", name: "Football" },
+    ];
+  }
 };
 
-export const getSlots = async (
-  venueId: string,
-  date: string
-): Promise<Slot[]> => {
-  await delay(1000);
-  return generateTimeSlots(venueId, date);
+// Get dates from backend
+export const getDates = async (): Promise<Day[]> => {
+  try {
+    const response = await apiCall('/api/dates');
+    if (response.success && response.data) {
+      return response.data.map((item: any) => ({
+        date: item.date,
+        dayName: item.day || new Date(item.date).toLocaleDateString("en-US", { weekday: "short" }),
+        dayNumber: new Date(item.date).getDate().toString(),
+      }));
+    }
+    return getNext7Days();
+  } catch (error) {
+    console.error('Failed to fetch dates:', error);
+    return getNext7Days();
+  }
 };
 
+// Get slots for a specific venue and date
+export const getSlots = async (venueId: string, date: string): Promise<Slot[]> => {
+  try {
+    const response = await apiCall(`/api/slots?venue=${venueId}&date=${date}`);
+    
+    if (response.success && response.data && response.data.slots) {
+      return response.data.slots.map((slot: any) => ({
+        id: slot.id,
+        venueId: slot.venue?.id || venueId,
+        startTime: slot.time,
+        endTime: calculateEndTime(slot.time),
+        isBooked: slot.booked,
+        date: slot.date,
+        venue: slot.venue,
+        booking: slot.booking,
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Failed to fetch slots:', error);
+    throw new Error('Failed to load slots. Please try again.');
+  }
+};
+
+// Book a slot
 export const bookSlot = async (
   slotId: string,
   playerName: string,
   sport: string
 ): Promise<{ success: boolean; message: string }> => {
-  await delay(1500); // Simulate booking process
+  try {
+    const response = await apiCall('/api/book', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_name: playerName,
+        sport: sport,
+        slot_id: slotId
+      })
+    });
 
-  // Simulate success with 90% probability
-  const isSuccess = Math.random() < 0.9;
-
-  if (isSuccess) {
     return {
-      success: true,
-      message: "Slot booked successfully!",
+      success: response.success || false,
+      message: response.message || 'Booking completed successfully!'
     };
-  } else {
+  } catch (error) {
+    console.error('Failed to book slot:', error);
     return {
       success: false,
-      message: "This slot was just booked by someone else. Please try another.",
+      message: error instanceof Error ? error.message : 'Failed to book slot. Please try again.'
     };
   }
 };
 
+// Helper function to calculate end time (1 hour after start time)
+const calculateEndTime = (startTime: string): string => {
+  try {
+    let [hours, minutes] = startTime.split(':').map(Number);
+    hours += 1;
+    if (hours >= 24) hours = 0;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error('Error calculating end time:', error);
+    return startTime;
+  }
+};
+
 // Helper to generate the next 7 days
-export const getNext7Days = () => {
+export const getNext7Days = (): Day[] => {
   const days = [];
   const today = new Date();
 

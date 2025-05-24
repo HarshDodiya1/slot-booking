@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { bookSlot, getSports } from "@/lib/api";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Clock } from "lucide-react";
 import { useEffect } from "react";
 import { Confetti } from "./confetti";
 
@@ -89,7 +89,14 @@ export function BookingForm({ slot, venueId, date, onSuccess }: BookingFormProps
       if (result.success) {
         setShowConfetti(true);
         toast.success(result.message);
-        onSuccess();
+        
+        // Hide confetti after 3 seconds and then call onSuccess
+        setTimeout(() => {
+          setShowConfetti(false);
+          setTimeout(() => {
+            onSuccess();
+          }, 500);
+        }, 3000);
       } else {
         toast.error(result.message);
       }
@@ -101,16 +108,25 @@ export function BookingForm({ slot, venueId, date, onSuccess }: BookingFormProps
   }
 
   return (
-    <div className="space-y-4">
-      {showConfetti && <Confetti />}
+    <div className="space-y-4 relative">
+      {/* Confetti positioned absolutely to cover the modal */}
+      {showConfetti && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <Confetti />
+        </div>
+      )}
       
-      <div>
-        <h2 className="text-2xl font-bold">Book a Slot</h2>
-        <p className="text-muted-foreground mt-1">
-          {formatTime(slot.startTime)} - {formatTime(slot.endTime)} · ${slot.price}
-        </p>
+      {/* Slot Time Display */}
+      <div className="text-center p-3 bg-muted rounded-lg">
+        <div className="flex items-center justify-center space-x-2">
+          <Clock className="h-4 w-4" />
+          <span className="font-medium">
+            {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+          </span>
+        </div>
       </div>
 
+      {/* Booking Form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
@@ -120,7 +136,11 @@ export function BookingForm({ slot, venueId, date, onSuccess }: BookingFormProps
               <FormItem>
                 <FormLabel>Player Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your name" {...field} />
+                  <Input 
+                    placeholder="Enter your name" 
+                    {...field} 
+                    disabled={isSubmitting}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -134,7 +154,7 @@ export function BookingForm({ slot, venueId, date, onSuccess }: BookingFormProps
               <FormItem>
                 <FormLabel>Sport</FormLabel>
                 <Select
-                  disabled={isLoading}
+                  disabled={isLoading || isSubmitting}
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
@@ -145,7 +165,7 @@ export function BookingForm({ slot, venueId, date, onSuccess }: BookingFormProps
                   </FormControl>
                   <SelectContent>
                     {sports.map((sport) => (
-                      <SelectItem key={sport.id} value={sport.id}>
+                      <SelectItem key={sport.id} value={sport.name}>
                         {sport.name}
                       </SelectItem>
                     ))}
@@ -163,7 +183,8 @@ export function BookingForm({ slot, venueId, date, onSuccess }: BookingFormProps
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Booking...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                Booking...
               </>
             ) : (
               "Book Slot"

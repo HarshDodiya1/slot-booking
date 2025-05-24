@@ -4,6 +4,9 @@ export interface Venue {
 }
 
 export interface Slot {
+  booking: {
+    userName: string;
+  };
   id: string;
   venueId: string;
   startTime: string;
