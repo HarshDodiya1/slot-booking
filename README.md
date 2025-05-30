@@ -30,16 +30,13 @@ A modern, full-stack slot booking application built with Next.js and Node.js tha
 The Slot Booking System is a comprehensive web application designed to streamline the process of booking sports venue slots. It provides a seamless experience for users to view available time slots, make bookings, and manage reservations with real-time updates.
 
 ### 🎪 Live Demo
-> *Demo link will be added once deployed*
+> [*See Now*](https://slot-booking-xi.vercel.app/)
 
 ## ✨ Key Features
 
-- 🏟️ **Multi-Venue Support** - Book slots across different sports venues
 - ⏰ **Real-time Slot Updates** - Live updates every 10 seconds
 - 🎯 **Sport-specific Booking** - Choose from various sports categories
-- 📅 **Date Selection** - Book slots for upcoming dates
 - 🔄 **Auto-refresh** - Automatic slot status updates
-- 🎉 **Success Animations** - Confetti celebration on successful booking
 - 🌙 **Dark/Light Theme** - Toggle between themes
 - 📱 **Responsive Design** - Works on all device sizes
 - ⚡ **Fast Performance** - Optimized with Next.js 13
@@ -69,7 +66,6 @@ The Slot Booking System is a comprehensive web application designed to streamlin
 ### Development Tools
 - **Package Manager**: npm
 - **Database Client**: Prisma Studio
-- **Code Quality**: ESLint
 - **Version Control**: Git
 
 ## 📦 Installation Guide
@@ -260,30 +256,6 @@ npm start
 cd client
 npm run build
 npm start
-```
-
-### Useful Development Commands
-
-```bash
-# Client Commands
-cd client
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-
-# Server Commands
-cd server
-npm run dev          # Start development server with nodemon
-npm start            # Start production server
-
-# Database Commands (from server directory)
-npx prisma studio    # Open Prisma Studio
-npx prisma generate  # Generate Prisma client
-npx prisma db push   # Push schema changes to database
-npx prisma db pull   # Pull schema from database
-npx prisma migrate dev # Create and apply migration
-npx prisma migrate reset # Reset database
 ```
 
 ## 📱 Usage Guide
@@ -555,19 +527,3 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 *Happy Booking! 🏟️*Client will run on http://localhost
 ```
-
-This comprehensive README.md file includes:
-
-1. ✅ **Complete Table of Contents** with proper indexing
-2. ✅ **Detailed Installation Guide** with step-by-step instructions
-3. ✅ **Environment Configuration** for both client and server
-4. ✅ **Database Setup** with Prisma commands
-5. ✅ **Folder Structure** explanation
-6. ✅ **API Documentation** with examples
-7. ✅ **Usage Guide** for end users
-8. ✅ **Troubleshooting Section** for common issues
-9. ✅ **Deployment Instructions**
-10. ✅ **Contributing Guidelines**
-11. ✅ **Professional formatting** with emojis and badges
-
-The README is designed to be comprehensive yet easy to follow, allowing anyone to set up and run your slot booking system without errors!

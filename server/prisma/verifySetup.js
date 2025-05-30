@@ -2,7 +2,7 @@ const prisma = require("../database/db.js");
 
 async function verifySetup() {
   try {
-    console.log("🔍 Verifying Prisma setup...");
+    console.log("Verifying Prisma setup...");
 
     const venueCount = await prisma.venue.count();
     const slotCount = await prisma.slot.count();
@@ -22,7 +22,7 @@ async function verifySetup() {
       take: 5,
     });
 
-    console.log("🎯 Sample available slots:");
+    console.log("Sample available slots:");
     availableSlots.forEach((slot) => {
       console.log(
         `  ${slot.venue.name} - ${slot.date.toDateString()} at ${slot.time}`,
