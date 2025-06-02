@@ -1,10 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Slot, BookingFormData } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,9 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { bookSlot, getSports } from "@/lib/api";
+import { Slot } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Clock, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Loader2, Clock } from "lucide-react";
-import { useEffect } from "react";
+import { z } from "zod";
 import { Confetti } from "./confetti";
 
 const formSchema = z.object({

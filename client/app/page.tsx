@@ -8,7 +8,7 @@ import { VenueSelector } from "@/components/venue-selector";
 import { getDates, getSlots, getVenues } from "@/lib/api";
 import { Day, Slot, Venue } from "@/types";
 import { CalendarDays } from "lucide-react";
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const [venues, setVenues] = useState<Venue[]>([]);
